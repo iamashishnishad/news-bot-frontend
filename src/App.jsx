@@ -23,7 +23,7 @@ function App() {
     }
 
     // Connect to Socket.IO server
-    socketRef.current = io(import.meta.env.VITE_BACKEND_URL || process.env.REACT_APP_API_URL || 'http://localhost:5000')
+    socketRef.current = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000')
 
     socketRef.current.on('connect', () => {
       setIsConnected(true)
@@ -69,35 +69,22 @@ function App() {
     scrollToBottom()
   }, [messages])
 
-
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_FALLBACK || 'http://localhost:5000'
-
-socketRef.current = io(backendUrl)
-
-const fetchChatHistory = async (sessionId) => {
-  try {
-    const response = await fetch(`${backendUrl}/api/chat/history/${sessionId}`)
-    const data = await response.json()
-    if (data.history) {
-      setMessages(data.history)
+  const fetchChatHistory = async (sessionId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/chat/history/${sessionId}`)
+      const data = await response.json()
+      if (data.history) {
+        // Filter out duplicates based on timestamp or content
+        setMessages(prev => {
+          const existingTimestamps = new Set(prev.map(msg => msg.timestamp));
+          const newMessages = data.history.filter(msg => !existingTimestamps.has(msg.timestamp));
+          return [...prev, ...newMessages];
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error)
     }
-  } catch (error) {
-    console.error('Error fetching chat history:', error)
   }
-}
-
-
-  // const fetchChatHistory = async (sessionId) => {
-  //   try {
-  //     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/chat/history/${sessionId}`)
-  //     const data = await response.json()
-  //     if (data.history) {
-  //       setMessages(data.history)
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching chat history:', error)
-  //   }
-  // }
 
   const sendMessage = () => {
     if (inputMessage.trim() === '' || isLoading) return
@@ -121,7 +108,7 @@ const fetchChatHistory = async (sessionId) => {
 
   const clearChat = async () => {
     try {
-      await fetch(`${backendUrl}/api/chat/history/${sessionId}`, {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/chat/history/${sessionId}`, {
         method: 'DELETE'
       })
       setMessages([])
@@ -129,18 +116,6 @@ const fetchChatHistory = async (sessionId) => {
       console.error('Error clearing chat:', error)
     }
   }
-  
-
-  // const clearChat = async () => {
-  //   try {
-  //     await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/chat/history/${sessionId}`, {
-  //       method: 'DELETE'
-  //     })
-  //     setMessages([])
-  //   } catch (error) {
-  //     console.error('Error clearing chat:', error)
-  //   }
-  // }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
