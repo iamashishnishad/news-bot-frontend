@@ -71,7 +71,7 @@ function App() {
 
   const fetchChatHistory = async (sessionId) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/chat/history/${sessionId}`)
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/chat/history/${sessionId}`)
       const data = await response.json()
       if (data.history) {
         setMessages(data.history)
